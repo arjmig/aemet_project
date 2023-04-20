@@ -24,7 +24,7 @@ def to_float(x):
 
 all_aprils = []
 
-for n in range(2000, 2023):
+for n in range(2000, 2024):
     fechaIniStr = f'{n}-04-01T00:00:00UTC'
     fechaFinStr = f'{n}-05-01T00:00:00UTC'
     url = "https://opendata.aemet.es/opendata/api/valores/climatologicos/diarios/datos/" \
@@ -33,8 +33,10 @@ for n in range(2000, 2023):
     stations_data = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
     stations_data = pd.DataFrame(stations_data)
     stations_data['prec'] = stations_data.prec.apply(to_float)
-    mean_prec = stations_data.groupby('provincia')['prec'].mean()
+    mean_prec = stations_data.groupby('provincia').prec.mean()
     mean_prec = mean_prec.reset_index()
     all_aprils += [mean_prec]
 
 all_aprils = pd.concat(all_aprils)
+
+all_aprils = all_aprils.reset_index(drop=True)
