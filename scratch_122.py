@@ -36,7 +36,11 @@ for n in range(2000, 2024):
     mean_prec = stations_data.groupby('provincia').prec.mean()
     mean_prec = mean_prec.reset_index()
     all_aprils += [mean_prec]
+##
+all_aprils = pd.concat(all_aprils).reset_index(drop=True)
+all_aprils['label'] = all_aprils.index
+all_aprils.sort_values(['provincia', 'label'], inplace=True)
 
-all_aprils = pd.concat(all_aprils)
 
-all_aprils = all_aprils.reset_index(drop=True)
+##
+
