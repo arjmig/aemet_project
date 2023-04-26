@@ -32,7 +32,7 @@ for n in range(2000, 2024):
     response = requests.request('GET', url, headers=headers, params=querystring).json()
     stations_data = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
     stations_data = pd.DataFrame(stations_data)
-    num_stations = stations_data[['provincia', 'indicativo']][stations_data.fecha.apply(lambda x: '-01' in x)].fillna(0)
+    num_stations = stations_data[['provincia', 'indicativo']].drop_duplicates()
     num_stations = num_stations.groupby('provincia').indicativo.count()
     stations_data['prec'] = stations_data.prec.apply(to_float)
     province_prec = stations_data.groupby('provincia').prec.sum()
@@ -43,7 +43,7 @@ for n in range(2000, 2024):
 
 all_aprils = pd.concat(all_aprils, axis=1)
 all_aprils.columns = range(2000, 2024)
-stations_by_year = pd.concat(stations_by_year, axis=1)
+stations_by_year = pd.concat(stations_by_year, axis=1).fillna(0).astype(int)
 stations_by_year.columns = range(2000, 2024)
 
 
