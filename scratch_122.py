@@ -23,7 +23,7 @@ def to_float(x):
         return 0
 
 all_aprils = []
-
+stations_by_year = []
 for n in range(2000, 2024):
     fechaIniStr = f'{n}-04-01T00:00:00UTC'
     fechaFinStr = f'{n}-05-01T00:00:00UTC'
@@ -32,15 +32,21 @@ for n in range(2000, 2024):
     response = requests.request('GET', url, headers=headers, params=querystring).json()
     stations_data = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
     stations_data = pd.DataFrame(stations_data)
+    num_stations = stations_data[['provincia', 'indicativo']][stations_data.fecha.apply(lambda x: '-01' in x)].fillna(0)
+    num_stations = num_stations.groupby('provincia').indicativo.count()
     stations_data['prec'] = stations_data.prec.apply(to_float)
     province_prec = stations_data.groupby('provincia').prec.sum()
-    year = province_prec.apply(lambda x: n).rename('year')
-    year_prec = pd.concat([province_prec, year], axis=1)
-    all_aprils += [year_prec]
+    province_prec= province_prec.divide(num_stations)
+    all_aprils += [province_prec]
+    stations_by_year += [num_stations]
 
-all_aprils = pd.concat(all_aprils)
-##
-all_aprils.sort_values(['provincia', 'year'], inplace=True)
+
+all_aprils = pd.concat(all_aprils, axis=1)
+all_aprils.columns = range(2000, 2024)
+stations_by_year = pd.concat(stations_by_year, axis=1)
+stations_by_year.columns = range(2000, 2024)
+
+
 
 
 
