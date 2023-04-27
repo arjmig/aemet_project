@@ -1,7 +1,6 @@
 ##
 import requests
 import pandas as pd
-
 with open('token_1.txt', 'r') as file:
     api_key = file.read()
 querystring = {"api_key": api_key}
