@@ -53,3 +53,5 @@ all_aprils['latitude'] = station_location['latitud']
 all_aprils['longitude'] = station_location['longitud']
 
 
+with open('stations_data.csv', 'w') as file:
+    all_aprils.to_csv(file)
