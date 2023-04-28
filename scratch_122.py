@@ -31,21 +31,25 @@ for n in range(2000, 2024):
     response = requests.request('GET', url, headers=headers, params=querystring).json()
     stations_data = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
     stations_data = pd.DataFrame(stations_data)
-    num_stations = stations_data[['provincia', 'indicativo']].drop_duplicates()
-    num_stations = num_stations.groupby('provincia').indicativo.count()
     stations_data['prec'] = stations_data.prec.apply(to_float)
-    province_prec = stations_data.groupby('provincia').prec.sum()
-    province_prec= province_prec.divide(num_stations)
+    province_prec = stations_data.groupby('indicativo').prec.sum()
     all_aprils += [province_prec]
-    stations_by_year += [num_stations]
-
 
 all_aprils = pd.concat(all_aprils, axis=1)
+
+fill_values = all_aprils.mean(axis=1)
+
+all_aprils = all_aprils.apply(lambda x: x.fillna(fill_values))
+
 all_aprils.columns = range(2000, 2024)
-stations_by_year = pd.concat(stations_by_year, axis=1).fillna(0).astype(int)
-stations_by_year.columns = range(2000, 2024)
-
-
-
+##
+url = "https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones"
+response = requests.request('GET', url, headers=headers, params=querystring).json()
+station_location = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
+station_location = pd.DataFrame(station_location)[['latitud', 'longitud', 'indicativo']].groupby('indicativo').apply(
+    lambda x: x.iloc[0])[['latitud', 'longitud']]
+##
+all_aprils['latitude'] = station_location['latitud']
+all_aprils['longitude'] = station_location['longitud']
 
 
