@@ -42,12 +42,13 @@ fill_values = all_aprils.mean(axis=1)
 all_aprils = all_aprils.apply(lambda x: x.fillna(fill_values))
 
 all_aprils.columns = range(2000, 2024)
-##
+
 url = "https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones"
 response = requests.request('GET', url, headers=headers, params=querystring).json()
 station_location = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
 station_location = pd.DataFrame(station_location)[['latitud', 'longitud', 'indicativo', 'provincia']].groupby('indicativo').apply(
     lambda x: x.iloc[0])[['latitud', 'longitud', 'provincia']]
+
 def zones(x):
     if (x == 'LAS PALMAS') or (x == 'STA. CRUZ DE TENERIFE'):
         return 2
@@ -55,25 +56,36 @@ def zones(x):
         return 1
 
 station_location['provincia'] = station_location['provincia'].apply(zones)
+
 def convert_coor(x):
-    if ('N' in x) or ('E' in x):
-        return int(x[:-1])
-    if ('S' in x) or ('W' in x):
-        return -int(x[:-1])
-##
+    degrees = int(x[:2])
+    minutes = int(x[2:4])
+    seconds = int(x[4:6])
+    sign = x[6]
+    add_up = degrees + minutes/60 + seconds/3600
+    if sign == 'W' or sign == 'S':
+        add_up = -add_up
+    return add_up
+
 station_location['latitud'] = station_location['latitud'].apply(lambda x: convert_coor(x))
 station_location['longitud'] = station_location['longitud'].apply(lambda x: convert_coor(x))
 station_location.index.rename(None, inplace=True)
-station_location.rename(columns={'latitud': 'latitude', 'longitud':'longitude', 'provincia': 'zone'}, inplace=True)
+station_location.rename(columns={'latitud': 'latitude', 'longitud': 'longitude', 'provincia': 'zone'}, inplace=True)
 
-##
-all_aprils['latitude'] = station_location['latitud']
-all_aprils['longitude'] = station_location['longitud']
-##
+
+all_aprils['latitude'] = station_location['latitude']
+all_aprils['longitude'] = station_location['longitude']
+
 
 with open('prec_data.csv', 'w') as file:
     all_aprils.to_csv(file)
 
 with open('stations_data.csv', 'w') as file:
     station_location.to_csv(file)
+
+
+
+
+
+##
 
