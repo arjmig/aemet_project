@@ -46,12 +46,24 @@ all_aprils.columns = range(2000, 2024)
 url = "https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones"
 response = requests.request('GET', url, headers=headers, params=querystring).json()
 station_location = requests.request('GET', response['datos'], headers=headers, params=querystring).json()
-station_location = pd.DataFrame(station_location)[['latitud', 'longitud', 'indicativo']].groupby('indicativo').apply(
-    lambda x: x.iloc[0])[['latitud', 'longitud']]
+station_location = pd.DataFrame(station_location)[['latitud', 'longitud', 'indicativo', 'provincia']].groupby('indicativo').apply(
+    lambda x: x.iloc[0])[['latitud', 'longitud', 'provincia']]
+def zones(x):
+    if (x == 'LAS PALMAS') or (x == 'STA. CRUZ DE TENERIFE'):
+        return 2
+    else:
+        return 1
+
+station_location['provincia'] = station_location['provincia'].apply(zones)
+station_location.rename(columns={'provincia': 'zone'}, inplace=True)
 ##
 all_aprils['latitude'] = station_location['latitud']
 all_aprils['longitude'] = station_location['longitud']
+##
 
+with open('prec_data.csv', 'w') as file:
+    all_aprils.to_csv(file)
 
 with open('stations_data.csv', 'w') as file:
-    all_aprils.to_csv(file)
+    station_location.to_csv(file)
+
