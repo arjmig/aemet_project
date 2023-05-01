@@ -14,7 +14,11 @@ canarias_isles = spain[:18]
 ceuta_melilla = spain[18:20]
 remaining_spain = spain[29:]
 
-canarias_isles.plot()
+fig, ax = plt.subplots(figsize=(12, 10))
+remaining_spain.plot(ax=ax)
+zone_1.plot(ax=ax)
+plt.show()
+##
 ax = remaining_spain.plot()
 ceuta_melilla.plot(ax=ax)
 

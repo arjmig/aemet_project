@@ -55,7 +55,17 @@ def zones(x):
         return 1
 
 station_location['provincia'] = station_location['provincia'].apply(zones)
-station_location.rename(columns={'provincia': 'zone'}, inplace=True)
+def convert_coor(x):
+    if ('N' in x) or ('E' in x):
+        return int(x[:-1])
+    if ('S' in x) or ('W' in x):
+        return -int(x[:-1])
+##
+station_location['latitud'] = station_location['latitud'].apply(lambda x: convert_coor(x))
+station_location['longitud'] = station_location['longitud'].apply(lambda x: convert_coor(x))
+station_location.index.rename(None, inplace=True)
+station_location.rename(columns={'latitud': 'latitude', 'longitud':'longitude', 'provincia': 'zone'}, inplace=True)
+
 ##
 all_aprils['latitude'] = station_location['latitud']
 all_aprils['longitude'] = station_location['longitud']
