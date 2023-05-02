@@ -3,8 +3,9 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from shapely import points
-spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json', encoding='utf-8').explode().geometry[0]
 
+spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json', encoding='utf-8').explode(index_parts=False).geometry[0]
+##
 with open('stations_data.csv', 'r') as file:
     stations_data = pd.read_csv(file)
 stations_data = stations_data[['latitude', 'longitude', 'zone']]
@@ -25,13 +26,10 @@ zone_2 = gpd.GeoSeries(d[1])
 canarias_isles = spain[:18]
 ceuta_melilla = spain[18:20]
 remaining_spain = spain[29:]
-
+##
 fig, ax = plt.subplots(figsize=(10, 10))
 remaining_spain.plot(ax=ax)
-zone_1.plot(ax=ax)
+ceuta_melilla.plot(ax=ax)
+zone_1.plot(ax=ax, markersize=3.5, color='black')
 plt.show()
 ##
-ax = remaining_spain.plot()
-ceuta_melilla.plot(ax=ax)
-
-plt.show()
