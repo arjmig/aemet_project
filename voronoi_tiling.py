@@ -1,11 +1,15 @@
 ##
 import pandas as pd
 import geopandas as gpd
+from geopandas.tools import overlay
+import numpy as np
 import matplotlib.pyplot as plt
-from shapely import points
+from shapely import points, Polygon
+from scipy.spatial import Voronoi, voronoi_plot_2d
 
-spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json', encoding='utf-8').explode(index_parts=False).geometry[0]
+spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json', encoding='utf-8').explode(index_parts=True).geometry[0]
 ##
+spain = spain.to_crs(epsg=32630)
 with open('stations_data.csv', 'r') as file:
     stations_data = pd.read_csv(file)
 stations_data = stations_data[['latitude', 'longitude', 'zone']]
@@ -18,18 +22,38 @@ for r in [zone_1, zone_2]:
     c = []
     for s in r:
         c += [points(s)]
+    c = gpd.GeoSeries(c)
+    c.set_crs(epsg=4326, inplace=True)
+    c = c.to_crs(epsg=32630)
     d += [c]
 
-zone_1 = gpd.GeoSeries(d[0])
-zone_2 = gpd.GeoSeries(d[1])
-##
+zone_1 = d[0]
+zone_2 = d[1]
+
+c = []
+
+for zone in [zone_1, zone_2]:
+    d = []
+    for point in zone:
+        d += [[point.x, point.y]]
+    c += [d]
+
+np_zone_1 = np.array(c[0])
+np_zone_2 = np.array(c[1])
+
+vor = Voronoi(np_zone_1)
+
+polygons = [Polygon(vor.vertices[region]) for region in vor.regions if -1 not in region]
+
+polygons = gpd.GeoDataFrame(geometry=polygons, crs=32630)
+
+
 canarias_isles = spain[:18]
 ceuta_melilla = spain[18:20]
-remaining_spain = spain[29:]
-##
+remaining_spain = gpd.GeoDataFrame(spain[29:])
+poligons = remaining_spain.overlay(polygons, how='intersection')
 fig, ax = plt.subplots(figsize=(10, 10))
-remaining_spain.plot(ax=ax)
 ceuta_melilla.plot(ax=ax)
-zone_1.plot(ax=ax, markersize=3.5, color='black')
+polygons.plot(ax=ax, markersize=3.5, color='none', edgecolor='black')
 plt.show()
 ##
