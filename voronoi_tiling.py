@@ -5,11 +5,12 @@ from geopandas.tools import overlay
 import numpy as np
 import matplotlib.pyplot as plt
 from shapely import points, Polygon
-from scipy.spatial import Voronoi, voronoi_plot_2d
+from scipy.spatial import Voronoi
 
 spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json', encoding='utf-8').explode(index_parts=True).geometry[0]
-
 spain = spain.to_crs(epsg=32630)
+remaining_spain = gpd.GeoDataFrame(spain[(spain.index >= 29) + (spain.index.isin([18, 19]))])
+canarias_isles = gpd.GeoDataFrame(spain)
 with open('stations_data.csv', 'r') as file:
     stations_data = pd.read_csv(file)
 stations_data = stations_data[['latitude', 'longitude', 'zone']]
@@ -44,17 +45,12 @@ np_zone_2 = np.array(c[1])
 vor = Voronoi(np_zone_1)
 
 polygons = [Polygon(vor.vertices[region]) for region in vor.regions if -1 not in region]
-
 polygons = gpd.GeoDataFrame(geometry=polygons, crs=32630)
+polygons = polygons.overlay(remaining_spain, how='intersection')
+polygons = polygons.overlay(remaining_spain, how='union')
 
-
-canarias_isles = spain[:18]
-ceuta_melilla = spain[18:20]
-remaining_spain = gpd.GeoDataFrame(spain[29:])
-polygons = polygons.overlay(remaining_spain)
 fig, ax = plt.subplots()
-remaining_spain.plot(ax=ax)
-polygons.plot(ax=ax, markersize=3.5, color=None, edgecolor='black')
+polygons.plot(ax=ax, markersize=3.5, edgecolor='black')
 zone_1.plot(ax=ax, markersize=3.5, color='red')
 plt.show()
 
