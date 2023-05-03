@@ -1,4 +1,5 @@
 ##
+import json
 import pandas as pd
 import geopandas as gpd
 from geopandas.tools import overlay
@@ -51,6 +52,7 @@ polygons = [Polygon(vor.vertices[region]) for region in vor.regions if not -1 in
 polygons = gpd.GeoDataFrame(geometry=polygons, crs=32630)
 polygons = polygons.overlay(remaining_spain, how='intersection')
 polygons = polygons.overlay(remaining_spain, how='union')
+polygons.to_file('peninsular_voronoi.geojson', driver='GeoJSON')
 
 fig, ax = plt.subplots()
 polygons.plot(ax=ax, markersize=3.5, edgecolor='black')
@@ -64,7 +66,10 @@ polygons = gpd.GeoDataFrame(geometry=polygons, crs=32630)
 polygons = polygons.overlay(canarias_isles, how='intersection')
 polygons = polygons.overlay(canarias_isles, how='union')
 
+polygons.to_file('canarias_voronoi.geojson', driver='GeoJSON')
+
 fig, ax = plt.subplots()
 polygons.plot(ax=ax, markersize=3.5, edgecolor='black')
 zone_2.plot(ax=ax, markersize=3.5, color='red')
 plt.show()
+
