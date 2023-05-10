@@ -1,17 +1,16 @@
 ##
-import json
 import pandas as pd
 import geopandas as gpd
-from geopandas.tools import overlay
 import numpy as np
 import matplotlib.pyplot as plt
 from shapely import points, Polygon
 from scipy.spatial import Voronoi
 
-spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json', encoding='utf-8').explode(index_parts=True).geometry[0]
+spain = gpd.read_file('https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_ESP_0.json',
+                      encoding='utf-8').explode(index_parts=True).geometry[0]
 spain = spain.to_crs(epsg=32630)
-remaining_spain = gpd.GeoDataFrame(spain[(spain.index >= 29) + (spain.index.isin([18, 19]))])
-canarias_isles = gpd.GeoDataFrame(spain.iloc[:18])
+remaining_spain = gpd.GeoDataFrame(spain[(spain.index >= 23)*(spain.index != 27)])
+canarias_isles = gpd.GeoDataFrame(spain.iloc[:29])
 
 with open('stations_data.csv', 'r') as file:
     stations_data = pd.read_csv(file)
@@ -41,8 +40,8 @@ for zone in [zone_1, zone_2]:
         d += [[point.x, point.y]]
     c += [d]
 
-bounderies_map_1 = np.array([[-47000, 4889000], [-32000, 3878000], [1150000, 3875000]])
-bounderies_map_2 = np.array([[-1023500, 3305500], [-500300, 3306600], [-483300, 3128800]])
+bounderies_map_1 = np.array([[-47000, 4889000], [-32000, 3878000], [1150000, 3875000], [1119000, 4875000]])
+bounderies_map_2 = np.array([[-1023500, 3305500], [-500300, 3306600], [-483300, 3128800], [-1023500, 3000000]])
 np_zone_1 = np.concatenate((np.array(c[0]), bounderies_map_1))
 np_zone_2 = np.concatenate((np.array(c[1]), bounderies_map_2))
 
@@ -51,7 +50,6 @@ polygons = [Polygon(vor.vertices[region]) for region in vor.regions if not -1 in
 
 polygons = gpd.GeoDataFrame(geometry=polygons, crs=32630)
 polygons = polygons.overlay(remaining_spain, how='intersection')
-polygons = polygons.overlay(remaining_spain, how='union')
 polygons.to_file('peninsular_voronoi.geojson', driver='GeoJSON')
 
 fig, ax = plt.subplots()
@@ -64,7 +62,7 @@ vor = Voronoi(np_zone_2)
 polygons = [Polygon(vor.vertices[region]) for region in vor.regions if -1 not in region]
 polygons = gpd.GeoDataFrame(geometry=polygons, crs=32630)
 polygons = polygons.overlay(canarias_isles, how='intersection')
-polygons = polygons.overlay(canarias_isles, how='union')
+
 
 polygons.to_file('canarias_voronoi.geojson', driver='GeoJSON')
 
@@ -72,4 +70,3 @@ fig, ax = plt.subplots()
 polygons.plot(ax=ax, markersize=3.5, edgecolor='black')
 zone_2.plot(ax=ax, markersize=3.5, color='red')
 plt.show()
-
